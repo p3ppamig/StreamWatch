@@ -122,7 +122,10 @@ def main():
 def append(path, fields, rows):
     fresh = not os.path.exists(path)
     with open(path, "a", newline="", encoding="utf-8") as f:
-        w = csv.DictWriter(f, fieldnames=fields)
+        # csv writes \r\n by default (RFC 4180). .gitattributes normalises to
+        # LF on commit, so leaving it would log a line-ending warning on every
+        # one of the ~96 runs a day and drift the working copy from the commit.
+        w = csv.DictWriter(f, fieldnames=fields, lineterminator="\n")
         if fresh:
             w.writeheader()
         w.writerows(rows)
