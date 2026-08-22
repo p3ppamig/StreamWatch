@@ -14,6 +14,19 @@ and everything below you is not competition.
 So a *competitor* is a stream in your language with at least N viewers, where N
 is the concurrent count you realistically expect. Change `THRESHOLD` as you grow.
 
+## Repository visibility: public
+
+Make it **public** when you create it on GitHub.
+
+Actions minutes are unlimited on public repositories and capped at 2,000/month
+on private ones. At 15-minute polling this job burns roughly 1,440 of those —
+72% of the cap, with no headroom for a re-run or a backfill. Public removes the
+constraint entirely.
+
+Nothing here is sensitive. The credentials live in GitHub's secret store, never
+in the code, and the collected data is public Twitch information: channel names
+and viewer counts that anyone can read off the directory.
+
 ## Setup
 
 **1. Create a Twitch application** at <https://dev.twitch.tv/console/apps>
@@ -67,6 +80,12 @@ averages describe an experience nobody actually has.
 **GitHub disables scheduled workflows after 60 days of repository inactivity.**
 Commits made by Actions do not always reset that timer. You will get an email;
 re-enable from the Actions tab.
+
+**Fifteen minutes is deliberate, not a budget limit.** Going faster buys very
+little: the thing being measured is how many streams are live, and streams last
+hours, so four samples an hour already oversamples the signal. The variance that
+actually hurts is between weeks, not within an hour, and no amount of extra
+polling touches that.
 
 **Cron drift is normal.** GitHub's scheduler is best-effort and `*/15` often runs
 further apart under load. Rows are stamped at collection time, so this shows up
