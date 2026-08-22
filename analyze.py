@@ -11,7 +11,7 @@ Reported as MEDIAN across weeks, never mean: a single large channel dipping
 into the category for two hours would otherwise swamp a whole bucket.
 
   TZ_NAME    local timezone for the grid   (default America/New_York)
-  LANG       language to count             (default en)
+  LANG_FILTER  language to count           (default en)
   THRESHOLD  viewers a stream needs to count as competition (default 3)
 """
 
@@ -24,7 +24,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 TZ = ZoneInfo(os.environ.get("TZ_NAME", "America/New_York"))
-LANG = os.environ.get("LANG", "en")
+LANG = os.environ.get("LANG_FILTER", "en")
 THRESHOLD = int(os.environ.get("THRESHOLD", "3"))
 
 DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]

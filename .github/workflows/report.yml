@@ -23,7 +23,7 @@ jobs:
       - name: Analyse
         env:
           THRESHOLD: ${{ inputs.threshold }}
-          LANG: ${{ inputs.language }}
+          LANG_FILTER: ${{ inputs.language }}
           TZ_NAME: ${{ inputs.timezone }}
         run: |
           echo '```' >> $GITHUB_STEP_SUMMARY
