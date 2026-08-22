@@ -1,0 +1,31 @@
+name: report
+
+# Manual only. Run it from the Actions tab whenever you want a read on the
+# data so far; the summary appears in the run's own page, nothing is committed.
+on:
+  workflow_dispatch:
+    inputs:
+      threshold:
+        description: "Viewers a stream needs to count as competition"
+        default: "3"
+      language:
+        description: "Language to count"
+        default: "en"
+      timezone:
+        description: "Timezone for the grid"
+        default: "America/New_York"
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Analyse
+        env:
+          THRESHOLD: ${{ inputs.threshold }}
+          LANG: ${{ inputs.language }}
+          TZ_NAME: ${{ inputs.timezone }}
+        run: |
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          python3 analyze.py | tee -a $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
