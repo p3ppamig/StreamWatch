@@ -38,6 +38,8 @@ from zoneinfo import ZoneInfo
 TZ = ZoneInfo(os.environ.get("TZ_NAME", "America/New_York"))
 LANG = os.environ.get("LANG_FILTER", "en")
 THRESHOLD = int(os.environ.get("THRESHOLD", "3"))
+# Empty means both games pooled - the right default while the run spans TTW.
+GAME = os.environ.get("GAME_FILTER", "")
 
 DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 POLLS_PER_HOUR = 4.0
@@ -66,7 +68,11 @@ def load():
     buckets = defaultdict(list)
     for stamp in stamps:
         local = datetime.fromisoformat(stamp).astimezone(TZ)
-        rows = [r for r in by_stamp.get(stamp, []) if r["language"] == LANG]
+        # Rows collected before the game column existed were New Vegas only,
+        # so that is the fallback rather than dropping them.
+        rows = [r for r in by_stamp.get(stamp, [])
+                if r["language"] == LANG
+                and (not GAME or r.get("game", "Fallout: New Vegas") == GAME)]
         competitors = sum(1 for r in rows if int(r["viewer_count"]) >= THRESHOLD)
         viewers = sum(int(r["viewer_count"]) for r in rows)
         buckets[(local.weekday(), local.hour)].append((competitors, viewers))
