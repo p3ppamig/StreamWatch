@@ -27,7 +27,11 @@ import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 
-GAME_NAME = "Fallout: New Vegas"
+# Tale of Two Wastelands streams tag under EITHER game depending on the
+# streamer, so both are collected and the game is recorded per row. Filtering
+# happens at analysis time - collecting one and wishing for the other later is
+# not recoverable, collecting both costs one extra API call per poll.
+GAME_NAMES = ["Fallout 3", "Fallout: New Vegas"]
 API = "https://api.twitch.tv/helix"
 TIMEOUT = 30
 
@@ -65,40 +69,45 @@ def main():
 
     tok = token(cid, secret)
 
-    games = api_get("/games?name=" + urllib.parse.quote(GAME_NAME), tok, cid)
-    if not games.get("data"):
-        sys.exit("game not found on Twitch: " + GAME_NAME)
-    game_id = games["data"][0]["id"]
+    game_ids = {}
+    for name in GAME_NAMES:
+        g = api_get("/games?name=" + urllib.parse.quote(name), tok, cid)
+        if not g.get("data"):
+            sys.exit("game not found on Twitch: " + name)
+        game_ids[name] = g["data"][0]["id"]
 
-    # One timestamp for the whole poll so every row of a poll groups cleanly.
+    # One timestamp for the whole poll so every row of a poll groups cleanly,
+    # across both games.
     stamp = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
     rows = []
-    cursor = None
-    while True:
-        path = "/streams?game_id=%s&first=100" % game_id
-        if cursor:
-            path += "&after=" + urllib.parse.quote(cursor)
-        page = api_get(path, tok, cid)
-        for s in page.get("data", []):
-            rows.append({
-                "collected_at": stamp,
-                "user_login": s["user_login"],
-                "viewer_count": s["viewer_count"],
-                "language": s["language"],
-                "started_at": s["started_at"],
-                "title": (s.get("title") or "").replace("\n", " ")[:180],
-            })
-        cursor = (page.get("pagination") or {}).get("cursor")
-        if not cursor or not page.get("data"):
-            break
+    for name, game_id in game_ids.items():
+        cursor = None
+        while True:
+            path = "/streams?game_id=%s&first=100" % game_id
+            if cursor:
+                path += "&after=" + urllib.parse.quote(cursor)
+            page = api_get(path, tok, cid)
+            for s in page.get("data", []):
+                rows.append({
+                    "collected_at": stamp,
+                    "game": name,
+                    "user_login": s["user_login"],
+                    "viewer_count": s["viewer_count"],
+                    "language": s["language"],
+                    "started_at": s["started_at"],
+                    "title": (s.get("title") or "").replace("\n", " ")[:180],
+                })
+            cursor = (page.get("pagination") or {}).get("cursor")
+            if not cursor or not page.get("data"):
+                break
 
     month = stamp[:7]
     os.makedirs("data", exist_ok=True)
 
     if rows:
         append("data/%s.csv" % month,
-               ["collected_at", "user_login", "viewer_count",
+               ["collected_at", "game", "user_login", "viewer_count",
                 "language", "started_at", "title"],
                rows)
 
